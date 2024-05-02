@@ -1,0 +1,169 @@
+﻿Ethnicity_Label,Ethnicity,Race_Code
+Afghani,AF,A
+African American 2,B5,B
+African American 65%+,Q6,B
+African American 75%+,Q7,B
+African American 85%+,Q8,B
+African American 95%+,Q9,B
+Albanian,AL,E
+Aleut,A4,N
+Algerian,DZ,I
+Angolan,AO,B
+Arab,A7,I
+Armenian,AM,C
+Ashanti (Asante),A8,B
+Australian,AU,X
+Austrian,AT,W
+Azerb (Azerbaijani),AZ,C
+Bahraini,BH,I
+Bangladesh,BD,A
+Basque,B3,H
+Belgian,BE,W
+Beninese,BJ,B
+Bhutanese,BT,A
+Bosnian,BA,E
+Botswanan,BW,B
+Bulgarian,BG,E
+Burkina Faso,BF,B
+Burundian,BI,B
+Byelorussian (Belarusian),BY,E
+Cameroonian,CM,B
+Caribbean African American,C3,B
+Central African Republic,CF,B
+Chad,TD,B
+Chechnian (Chechnyan),C5,C
+Chinese,CN,F
+Comoros,KM,B
+Congo,CG,B
+Croatian,HR,E
+Cypriot,CY,M
+Czech,CZ,E
+Danish,DK,S
+Djiboutian,DJ,B
+Dutch,NL,W
+Egyptian,EG,I
+English,E5,W
+Equatorial Guinea,GQ,B
+Estonian,EE,E
+Ethiopian,ET,B
+Fijian,FJ,P
+Filipino (Philippine),PH,P
+Finnish,FI,S
+French,FR,W
+Gabonese,GA,B
+Gambian,GM,B
+Georgian,GE,C
+German,DE,W
+Ghanaian,GH,B
+Greek,GR,M
+Guinea-Bissau,GW,B
+Guinean,GN,B
+Guyana (Guyanese),GY,X
+Hausa,H2,B
+Hawaiian,H3,P
+Hispanic,H5,H
+Hungarian,HU,E
+Icelandic,IS,S
+Indian,IN,A
+Indonesian,ID,F
+Iraqi,IQ,I
+Irish,IE,W
+Italian,IT,M
+Ivory Coast (Cote d'Ivoire),CI,B
+Japanese,JP,F
+Jewish,J4,J
+Jordanian,JO,I
+Kazakh (Kazakhstan),KZ,C
+Kenyan,KE,B
+"Khmer (Kampuchean, Cambodian)",KH,F
+Kirghiz (Kyrgyzstan),KG,C
+Korean,K5,F
+Kurdish,K8,W
+Kuwaiti,KW,I
+Laotian,LA,F
+Latvian,LV,E
+Lebanese,LB,I
+Lesotho (Basotho),LS,B
+Liberian,LR,B
+Libyan,LY,I
+Liechtenstein,LI,W
+Lithuanian,LT,E
+Luxembourgian,LU,W
+Macedonian,MK,E
+Madagascar,MG,B
+Malawian,MW,B
+Malay (Malaysian),MY,F
+Maldivian,MV,X
+Malian,ML,B
+Maltese,MT,M
+Manx (Isle of Man),IM,W
+Mauritanian,MR,B
+Moldavian (Moldovan),MD,E
+Mongolian,MN,F
+Moroccan,MA,I
+Mozambique (Mozambican),MZ,B
+multi-ethnic,ZZ,Z
+Myanmar (Burma),MM,F
+Namibian,NA,B
+Native American (American Indian),N3,N
+Nauruan,NR,P
+Nepalese,NP,A
+New Zealand,NZ,X
+Niger,NE,B
+Nigerian,NG,B
+Norwegian,NO,S
+Omani,OM,I
+other Asian,O8,A
+Pakistani,PK,A
+Papua New Guinean,PG,P
+Persian,P4,I
+Pili (Pilipino),P5,P
+Polish,PL,E
+Portuguese,PT,H
+Qatari,QA,I
+Romanian,RO,E
+Ruandan (Rwandan),RW,B
+Russian,RU,E
+Saudi,SA,I
+Scottish (Scotch),S3,W
+Senegalese,SN,B
+Serbian,CS,E
+Seychelles,SC,B
+Sierra Leone,SL,B
+Slovakian (Slovak),SK,E
+Slovenian (Slovene),SI,E
+Somalian,SO,B
+South African,ZA,B
+Sri Lankan (Ceylon),LK,A
+Sudanese,SD,B
+Surinamese,SR,X
+Swahili,S9,B
+Swaziland,SZ,B
+Swedish,SE,S
+Swiss,CH,W
+Syrian,SY,I
+Tajik (Tajikistan),TJ,C
+Tanzanian,TZ,B
+Telugan,T4,A
+Thai,TH,F
+Tibetan,T5,F
+Togo (Togolese),TG,B
+Tongan,TO,P
+Tunisian,TN,I
+Turkish,TR,W
+Turkmenistan,TM,C
+Ugandan,UG,B
+Ukrainian,UA,E
+United Arab Emirates,AE,I
+Uzbekistani,UZ,C
+Vanuatuan ,VU,P
+Vietnamese,VN,F
+Welsh,W4,W
+Western Samoan,WS,P
+Xhosa,X5,B
+Yemeni,YE,I
+Zairian (Democratic Republic of the Congo),CD,B
+Zambian,ZM,B
+Zimbabwean,ZW,B
+Zulu,Z8,B
+unknown,00,Z

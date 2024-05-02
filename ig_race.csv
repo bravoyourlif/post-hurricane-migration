@@ -1,0 +1,16 @@
+﻿Race_Label,Race_Code,Race
+African American,B,black
+Central & Southwest Asian,C,asian
+Eastern European,E,white
+Far Eastern,F,asian
+Hispanic,H,latinx
+Jewish,J,white
+Mediterranean,M,white
+Middle Eastern,I,white
+Native American,N,other
+other,X,other
+Pacific Islander,P,asian
+Scandinavian,S,white
+South Asian,A,asian
+Western European,W,white
+uncoded (no group),Z,
