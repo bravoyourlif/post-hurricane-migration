@@ -51,17 +51,19 @@ hh <- hh %>%
            MOVE_OUT_County = ifelse(MOVE_OUT == 1 & lead(COUNTY_FIPS) == COUNTY_FIPS, 1, 0),
            MOVE_IN_County = ifelse(MOVE_IN == 1 & lag(COUNTY_FIPS) == COUNTY_FIPS, 1, 0),
            ## Move outside county, within hurricane-affected-counties
-           MOVE_OUT_NineCounty = ifelse(MOVE_OUT == 1 & MOVE_OUT_County == 0 & lead(GE_CENSUS_STATE_2010) == GE_CENSUS_STATE_2010, 1, 0) & lead(COUNTY_FIPS) %in% florida_affected_counties,
-           MOVE_IN_NineCounty = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & lag(GE_CENSUS_STATE_2010) == GE_CENSUS_STATE_2010, 1, 0) & lag(COUNTY_FIPS) %in% florida_affected_counties,
+           MOVE_OUT_NineCounty = ifelse(MOVE_OUT == 1 & MOVE_OUT_County == 0 & lead(COUNTY_FIPS) %in% florida_affected_counties, 1, 0),
+           MOVE_IN_NineCounty = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & lag(COUNTY_FIPS) %in% florida_affected_counties, 1, 0),
           ## Move outside county, within the state
           MOVE_OUT_State = ifelse(MOVE_OUT == 1 & MOVE_OUT_County == 0 & lead(GE_CENSUS_STATE_2010) == GE_CENSUS_STATE_2010, 1, 0),
            MOVE_IN_State = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & lag(GE_CENSUS_STATE_2010) == GE_CENSUS_STATE_2010, 1, 0),
            ## Move outside state
            MOVE_OUT_National = ifelse(MOVE_OUT == 1 & MOVE_OUT_County == 0 & MOVE_OUT_State == 0, 1, 0),
-           MOVE_IN_National = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & MOVE_IN_State == 0, 1, 0)
-    ) %>%
-    ungroup() %>%
+           MOVE_IN_National = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & MOVE_IN_State == 0, 1, 0)) %>%
     data.frame()
+
+hh <- hh %>%
+  mutate(MOVE_OUT_NineCounty = ifelse(is.na(MOVE_OUT), NA_real_, MOVE_OUT_NineCounty),
+        MOVE_IN_NineCounty = ifelse(is.na(MOVE_IN), NA_real_, MOVE_IN_NineCounty))
 
 # Load Infogroup race/ethnicity codes
 # For UDP server:
@@ -111,6 +113,11 @@ hh <- hh %>% left_join(ethnicity %>% select(Ethnicity_Code_1 = Ethnicity, Race))
     rename(SEX = gender_1) %>%
     data.frame()
 
-head(hh$Ethnicity_Code_1)
+# "Complete" the dataset
+hh <- hh %>%
+  group_by(FAMILYID) %>%
+  complete(YEAR = 2010:2019) %>%
+  fill(everything(), .direction = "down") %>%
+  ungroup()
 
 fwrite(hh, "output/hh_cleaned.csv.gz")
