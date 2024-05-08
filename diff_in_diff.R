@@ -21,15 +21,6 @@ if(dir.exists("/accounts/projects/timthomas/udp")) {
 # Load data
 hh <- fread("output/hh_cleaned.csv.gz")
 
-# "Complete" the dataset
-hh <- hh %>%
-  group_by(FAMILYID) %>%
-  complete(YEAR = 2010:2019) %>%
-  fill(everything(), .direction = "down") %>%
-  ungroup()
-
-fwrite(hh, "output/hh_cleaned.csv.gz")
-
 # Define hurricane-affected counties
 affected <- c("Charlotte", "Collier", "Hillsborough", "Lee", "Manatee", "Miami-Dade", "Monroe", "Pinellas", "Sarasota")
 
