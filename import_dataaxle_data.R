@@ -6,16 +6,7 @@ p_load(dplyr, nnet, ggplot2, effects, broom, stringr, purrr, tidyr, fst,
 # Set working directory
 setwd("~/data/projects/climate_displacement/")
 
-## Load dataset for households listed in `familyids`
-affected <- c("Charlotte", "Collier", "Hillsborough", "Lee", "Manatee", "Miami-Dade", "Monroe", "Pinellas", "Sarasota")
-
 florida_counties <- counties(year = 2013, state = "FL", cb = TRUE)
-
-florida_affected_counties <- florida_counties %>%
-  st_drop_geometry() %>%
-  filter(grepl(paste0(affected, collapse="|"), NAME)) %>%
-  select(GEOID) %>%
-  pull()
 
 florida_counties <- florida_counties %>%
   st_drop_geometry() %>%
@@ -23,13 +14,13 @@ florida_counties <- florida_counties %>%
   pull()
 
 # Counties affected by the hurriacne
-read_hh_func <- function(counties, start_year, region) {
+read_hh_func <- function(counties, start_year, end_year, region) {
 
 # Set working directory
 setwd("~/data/raw/dataaxle/")
 
 # Load IDs of households in study areas
-for(year in start_year:2019){
+for(year in start_year:end_year){
   cat("Processing", year, "FAMILYIDs...\n")
   ig <- read_fst(paste0("US_Consumer_5_File_", year, ".fst"),
                  columns = c("FAMILYID", "GE_CENSUS_STATE_2010", "GE_CENSUS_COUNTY")) %>%
@@ -50,7 +41,7 @@ print("read!")
 # Initialize an empty panel object
 panel <- NULL
 
-for(year in start_year:2019){
+for(year in start_year:end_year){
   cat("Processing", year, "infogroup data...\n")
   ig <- read_fst(paste0("US_Consumer_5_File_", year, ".fst"),
                  ## Add additional fields as desired
@@ -86,4 +77,4 @@ print("exported!")
 
 # Define counties
 # read_hh_func(florida_affected_counties, "florida")
-read_hh_func(florida_counties, 2010, "florida_all")
+read_hh_func(florida_counties, 2010, 2019, "florida_all")
