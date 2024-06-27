@@ -1,0 +1,118 @@
+﻿Area,Code1,Code2,Name,Units,Address,Unaffected,Affected,Minor,Major,Destroyed
+Lower,MM4,00132790-000000,"Skypoint aka G
+and JP llc",10,5240 suncrest road,10,0,0,0,0
+Lower,MM4,00132800-000000,"Stock Island
+Trailer Park",8,5264 Suncrest road,8,0,0,0,0
+Lower,MM4,00126550-000000,"Cow Key
+Marina",79,5031 5th ave,79,0,0,0,0
+Lower,MM4,00132680-000000,SunKrest,7,5176 Suncrest road,0,7,0,0,0
+Lower,MM4,00132750-000000,Leo's Campground aka G and JP llc,15,5236 suncrest,15,0,0,0,0
+Lower,MM4,00124140-000000,"Coral Isles aka
+banyan grove",48,5455 Macdonald Ave,48,0,0,0,0
+Lower,MM4,00124100-000000,"Coral Hammock
+Home owners",58,5510 Overseas hwy,58,0,0,0,0
+Lower,MM4,00125350-000000,"Overseas Trailer Park aka flagler
+village",50,5300 Macdonald Ave,50,0,0,0,0
+Lower,MM4,00126770-000000,"Stock Island Holdings aka
+Sunny Isles",16,5350 3rd Ave,0,16,0,0,0
+Lower,MM4,00132830-000000,John Pozzi,"""5""",5294 suncrest road,,,,,
+Lower,MM4,00132840-000000,John Pozzi Jr,5,44 sunset road,5,0,0,0,0
+Lower,MM5,00132380-000000,"PFAHNING
+JEROME ESTATE",9,6633 Maloney Ave,0,9,0,0,0
+Lower,MM5,00124560-000000,"Rolff's aka
+Tropic Palm",25,6125 2nd stret,3,22,0,0,0
+Lower,MM5,00125740-000000,"Wheels at Rest aka Hideaway aka nhc fl
+131llc",15,6531 Maloney Ave,0,15,0,0,0
+Lower,MM5,00132350-000000,"Waters edge
+aka Cayo Hueso",10,6511 Maloney Ave,0,10,0,0,0
+Lower,MM5,00126090-000000,"Harvelles aka
+Roys TR PK",91,6500 Maloney Ave,0,87,4,0,0
+Lower,MM5,00127510-000000,Bluewater,20,6630 Maloney Ave,0,20,0,0,0
+Lower,MM5,00125750-000000,"Ocean Spray aka Water
+view estates",10,6529 Maloney Ave,0,10,0,0,0
+Lower,MM5,00126120-000000,"El Mar aka Dion Family
+rev trust",10,Stock Island,10,0,0,0,0
+Lower,MM5,00125770-000000,Coconut grove,31,Stock Island,0,25,0,3,3
+Lower,MM5,00127270-000000,"Park along
+front street",13,5730 4th Ave,0,13,0,0,0
+Lower,MM5,00126060-000000,"Liz's trailer aka 5730 4th ave
+LLC",9,Stock Island,0,7,2,0,0
+Lower,MM5,00125670-000000,"Boyd
+Campground",154,Stock Island,154,0,0,0,0
+Lower,MM5,00133760-000000,Harbor Shores,68,Stock Island,1,66,1,0,0
+Lower,MM5,00124550-000000,"Old woodsons tr pk aka EA DEH Bush 1 OF
+2",6,Stock Island,0,6,0,0,0
+,MM5,00124550-000100,"Old woodsons tr pk aka EA DEH Bush 2 OF
+2",6,Stock Island,0,5,1,0,0
+Lower,MM5,00124540-000000,Waters Edge,55,Stock Island,5,44,1,1,4
+Lower,MM5,00124350-000000,"KIT Carson
+smith park",12,Stock Island,0,12,0,0,0
+,MM5,00125730-000000,"SITE TO THE EAST OF
+BOYDS",3,6621 Maloney Ave,0,3,0,0,0
+Lower,MM10,various 00121762-01,Sea Side,134,Big Coppitt,0,130,2,1,1
+Lower,MM10,,"Geiger Key
+Marina",39,Geiger Key,39,0,0,0,0
+Lower,MM14,,"Bluewater RV
+park",81,Saddlebunch Key,81,0,0,0,0
+Lower,MM19,,Lazy Lakes,99,Sugarloaf Key,99,0,0,0,0
+Lower,MM20,,"KOA of
+America",175,Upper Sugerloaf Key,175,0,0,0,0
+Lower,MM21,,"Rainbowbend trailer aka mobile homes
+hold",17,Cudjoe,0,15,2,0,0
+Lower,MM21,,"Sandpiper
+trailer aka Leslie Artigue",14,Cudjoe,3,11,0,0,0
+Lower,MM23,,Venture Out,659,Cudjoe,157,130,275,40,57
+Lower,MM24,,"Snub Harbor aka Mobil homes
+holdings",24,Summerland,0,23,0,0,1
+Lower,MM28,,"aka Brothers
+by the sea",17,little torch,3,10,0,4,0
+Lower,MM28,,"Little Palm
+cottages",48,little torch,47,1,0,0,0
+Lower,MM30,,Castaways,34,Big pine,5,0,11,12,6
+Lower,MM30,,Howard Havan,12,Big pine,0,0,0,0,12
+Lower,MM30,,"Freedom Lane
+aka Royal Palm rv",36,Big pine,18,17,0,0,1
+Lower,MM30,,Breezy Pines,98,Big pine,37,39,17,4,1
+Lower,MM30,,Seahorse,106,Big pine,0,88,0,2,16
+,MM30,,"Deans Trailer
+Park aka swierkos",10,Big pine,0,0,0,0,10
+Lower,MM32,,"big pine key campground aka fishing
+lodge",115,Big pine,101,0,1,7,6
+Lower,MM38,,NHC FL 13 LP,399,Ohio Key,0,0,0,274,125
+Middle,MM70,BS,"Fiesta Key
+Resort KOA",257,Fiesta Key,0,0,0,257,0
+Upper,MM92,OS,"DRIFTWOOD
+TRAILER PK",35,92157 OVERSEAS HWY,16,0,1,4,14
+Upper,MM92,OS,"OCEAN COVE
+TRAILER",28,92101 OVERSEAS HWY,0,25,0,0,3
+Upper,MM94,BS,Coral Sands,25,,23,1,1,0,0
+Upper,MM94,,KLOR,286,,232,54,0,0,
+Upper,MM94,OS,"PARADISE
+POINT M/H",16,99 SEASIDE AVE,0,0,5,0,11
+Upper,MM96,OS,TRAVEL TRAILER TOWN,27,96401 OVERSEAS HWY,0,0,27,0,0
+Upper,MM97,OS,"MY FAMILY
+TRUST",0,36 E SECOND ST,0,0,0,0,0
+Upper,MM97,BS,"RIPTIDE RV
+PARK",37,97680 OVERSEAS HWY,20,17,0,0,0
+Upper,MM99,BS,"CHEECA
+HOLDING LLC (POINT OF VIEW)",138,99060 OVERSEAS HWY,138,0,0,0,0
+Upper,MM101,OS,KEY LARGO KAMPGROUND,170,101551 OVERSEAS HWY,0,170,0,0,0
+Upper,MM101,OS,"Monroe County
+Housing",57,1 Harry Davis Circle,0,57,0,0,0
+Upper,MM101,BS,CALUSA CAMPGROUND,366,325 CALUSA ST,38,328,0,0,0
+Upper,MM101,BS,"PISCES 62 LLC
+aka Campers Cove",32,101644 OVERSEAS HWY,32,0,0,0,0
+Upper,MM101,BS,"LARGO RV aka
+Keys Holdings",71,101600 OVERSEAS HWY,68,3,0,0,0
+Upper,MM101,BS,"COASTAL WATERWAY
+INV",32,101620 OVERSEAS HWY,32,0,0,0,0
+Upper,MM103,BS,KINGS KAMP,65,103620 OVERSEAS HWY,65,0,0,0,0
+Upper,MM103,BS,CAPTAIN JAX,55,103650 OVERSEAS HWY,55,0,0,0,0
+Upper,MM103,BS,ZENDER INC,5,103680 OVERSEAS HWY,0,5,0,0,0
+Upper,MM104,,Keys Palms,30,1044200 Overseas hwy,30,0,0,0,0
+Upper,MM106,,"Barefoot Key RV resort aka Lakeview
+gardens",111,aka happy vagabond,111,0,0,0,0
+Upper,MM112,OS,"MANATEE
+COVE",39,999 MORRIS AVE,21,17,1,0,0
+Upper,MM 112,OS,PELICAN CAY,17,,0,17,0,0,0
+,,,,,,,,,,
