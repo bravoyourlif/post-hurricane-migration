@@ -18,70 +18,61 @@ if(dir.exists("/accounts/projects/timthomas/udp")) {
   setwd("/Users/taesoo/Documents/Projects/post-hurricane-migration")
 }
 
-# Define hurricane-affected counties
-affected <- c("Charlotte", "Collier", "Hillsborough", "Lee", "Manatee", "Miami-Dade", "Monroe", "Pinellas", "Sarasota")
 
-florida_counties <- counties(year = 2016, state = "FL", cb = TRUE)
+hh <- fread("raw/hh_raw_florida.csv.gz")
 
-florida_affected_counties <- florida_counties %>%
-  st_drop_geometry() %>%
-  filter(grepl(paste0(affected, collapse="|"), NAME)) %>%
-  select(GEOID) %>%
-  pull()
-
-florida_counties <- florida_counties %>%
-  st_drop_geometry() %>%
-  select(GEOID) %>%
-  pull()
-
-hh <- fread("raw/hh_raw_florida_all.csv.gz")
-
-# Create migration variables
-hh <- hh %>% 
-    # Reorder variables and arrange by ID and YEAR
-    select(FAMILYID, YEAR, everything()) %>%
-    mutate(COUNTY_FIPS = paste0(GE_CENSUS_STATE_2010, str_pad(GE_CENSUS_COUNTY, 3, "left", "0"))) %>%
-    arrange(FAMILYID, YEAR) %>%
-    lazy_dt() %>%
-    group_by(FAMILYID) %>%
-    #group_by(FAMILYID) %>% 
-    mutate(MOVE_OUT = ifelse(lead(GE_LONGITUDE_2010) != GE_LONGITUDE_2010, 1, 0),
-           MOVE_IN = ifelse(lag(GE_LONGITUDE_2010) != GE_LONGITUDE_2010, 1, 0),
-           ## Move within county
-           MOVE_OUT_County = ifelse(MOVE_OUT == 1 & lead(COUNTY_FIPS) == COUNTY_FIPS, 1, 0),
-           MOVE_IN_County = ifelse(MOVE_IN == 1 & lag(COUNTY_FIPS) == COUNTY_FIPS, 1, 0),
-           ## Move outside county, within hurricane-affected-counties
-           MOVE_OUT_NineCounty = ifelse(MOVE_OUT == 1 & MOVE_OUT_County == 0 & lead(COUNTY_FIPS) %in% florida_affected_counties, 1, 0),
-           MOVE_IN_NineCounty = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & lag(COUNTY_FIPS) %in% florida_affected_counties, 1, 0),
-          ## Move outside county, within the state
-          MOVE_OUT_State = ifelse(MOVE_OUT == 1 & MOVE_OUT_County == 0 & lead(GE_CENSUS_STATE_2010) == GE_CENSUS_STATE_2010, 1, 0),
-           MOVE_IN_State = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & lag(GE_CENSUS_STATE_2010) == GE_CENSUS_STATE_2010, 1, 0),
-           ## Move outside state
-           MOVE_OUT_National = ifelse(MOVE_OUT == 1 & MOVE_OUT_County == 0 & MOVE_OUT_State == 0, 1, 0),
-           MOVE_IN_National = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & MOVE_IN_State == 0, 1, 0)) %>%
-    data.frame()
+nrow(hh) # 21,215,272
 
 hh <- hh %>%
-  mutate(MOVE_OUT_NineCounty = ifelse(is.na(MOVE_OUT), NA_real_, MOVE_OUT_NineCounty),
-        MOVE_IN_NineCounty = ifelse(is.na(MOVE_IN), NA_real_, MOVE_IN_NineCounty))
+  filter(first_name!="")
 
-# Load Infogroup race/ethnicity codes
-# For UDP server:
-if(dir.exists("/accounts/projects/timthomas/udp")) {
-  ## For UDP server:
-  ethnicity <- read_csv("~/data/projects/climate_displacement/raw/ig_ethnicity.csv") %>%
-    left_join(read_csv("~/data/projects/climate_displacement/raw/ig_race.csv"))
-}
+# Reorder variables
+hh <- hh %>% 
+    # Reorder variables and arrange by ID and YEAR
+    select(FAMILYID, PID, YEAR, everything()) %>%
+    arrange(FAMILYID, PID, YEAR) %>%
+    mutate(COUNTY_ID = str_pad(COUNTY_ID, 5, "left", "0"),
+            TRACT_ID = str_pad(as.character(TRACT_ID), 11, "left", "0"))
 
-hh <- hh %>% left_join(ethnicity %>% select(Ethnicity_Code_1 = Ethnicity, Race))
+# Some households, despite having the same lat/long,
+# have length of residence values of 1 in two consecutive years
+# E.g.) FAMILYID "47567965"
+# Those households have not moved in the first instance
 
-# write_fst(panel, "King.fst")
+hh %>%
+  filter(PID==1 & LENGTH_OF_RESIDENCE==1) %>%
+  select(FAMILYID, YEAR, GE_LONGITUDE_2010, GE_LATITUDE_2010, LENGTH_OF_RESIDENCE) %>%
+  head(10)
+
+hh <- hh %>%
+    lazy_dt() %>%
+    mutate(location = paste(GE_LONGITUDE_2010, GE_LATITUDE_2010, sep = ", ")) %>%
+    group_by(FAMILYID, PID) %>%
+    mutate(
+        # Determine if moved out by comparing next location
+        MOVE_OUT = ifelse(lead(location, default = last(location)) != location, 1, 0),
+        # Determine if moved in by comparing previous location
+        MOVE_IN = ifelse(lag(location, default = first(location)) != location, 1, 0),
+
+        # Move within county
+        MOVE_OUT_County = ifelse(MOVE_OUT == 1 & lead(COUNTY_ID, default = last(COUNTY_ID)) == COUNTY_ID, 1, 0),
+        MOVE_IN_County = ifelse(MOVE_IN == 1 & lag(COUNTY_ID, default = first(COUNTY_ID)) == COUNTY_ID, 1, 0),
+
+        # Move outside county, within the state
+        MOVE_OUT_State = ifelse(MOVE_OUT == 1 & MOVE_OUT_County == 0 & substr(lead(COUNTY_ID, default = last(COUNTY_ID)), 1, 2) == substr(COUNTY_ID, 1, 2), 1, 0),
+        MOVE_IN_State = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & substr(lag(COUNTY_ID, default = first(COUNTY_ID)), 1, 2) == substr(COUNTY_ID, 1, 2), 1, 0),
+
+        # Move outside state
+        MOVE_OUT_National = ifelse(MOVE_OUT == 1 & MOVE_OUT_County == 0 & MOVE_OUT_State == 0, 1, 0),
+        MOVE_IN_National = ifelse(MOVE_IN == 1 & MOVE_IN_County == 0 & MOVE_IN_State == 0, 1, 0)
+    ) %>%
+    as_tibble()
 
 # Recode demographic variables
-  hh <- hh %>%
+hh <- hh %>%
   lazy_dt() %>%
   mutate(
-    AGE = case_when(HEAD_HH_AGE_CODE == "A" ~ "<25",
+    HH_AGE = case_when(HEAD_HH_AGE_CODE == "A" ~ "<25",
                     HEAD_HH_AGE_CODE == "B" ~ "25-29",
                     HEAD_HH_AGE_CODE == "C" ~ "30-34",
                     HEAD_HH_AGE_CODE == "D" ~ "35-39",
@@ -94,30 +85,47 @@ hh <- hh %>% left_join(ethnicity %>% select(Ethnicity_Code_1 = Ethnicity, Race))
                     HEAD_HH_AGE_CODE == "K" ~ "65-69",
                     HEAD_HH_AGE_CODE == "L" ~ "70-74",
                     HEAD_HH_AGE_CODE == "M" ~ "75+"),
-    AGE1 = case_when(AGE %in% c("25-29", "30-34") ~ "25-34",
-                     AGE %in% c("35-39", "40-44") ~ "35-44",
-                     AGE %in% c("45-49", "50-54") ~ "45-54",
-                     AGE %in% c("55-59", "60-64") ~ "55-64",
-                     AGE %in% c("65+", "65-69", "70-74", "75+") ~ "65+",
-                     TRUE ~ AGE),
-    AGE2 = case_when(
-      AGE1 %in% c("<25") ~ "<25",
-      AGE1 %in% c("25-34", "35-44") ~ "25-44",
-      AGE1 %in% c("45-54", "55-64") ~ "45-64",
-      AGE1 %in% c("65+") ~ "65+",
+    HH_AGE1 = case_when(HH_AGE %in% c("25-29", "30-34") ~ "25-34",
+                     HH_AGE %in% c("35-39", "40-44") ~ "35-44",
+                     HH_AGE %in% c("45-49", "50-54") ~ "45-54",
+                     HH_AGE %in% c("55-59", "60-64") ~ "55-64",
+                     HH_AGE %in% c("65+", "65-69", "70-74", "75+") ~ "65+",
+                     TRUE ~ HH_AGE),
+    HH_AGE2 = case_when(
+      HH_AGE1 %in% c("<25") ~ "<25",
+      HH_AGE1 %in% c("25-34", "35-44") ~ "25-44",
+      HH_AGE1 %in% c("45-54", "55-64") ~ "45-64",
+      HH_AGE1 %in% c("65+") ~ "65+",
       TRUE ~ NA_character_),
     CHILDREN = ifelse(CHILDRENHHCOUNT > 0, "Has children", "No children"),
     TENURE = ifelse(OWNER_RENTER_STATUS >= 7, "Own", "Rent"),
     # Race = ifelse(Race == "latinx", "hispanic", Race)
     ) %>%
-    rename(SEX = gender_1) %>%
+    rename(SEX = gender) %>%
     data.frame()
 
-# "Complete" the dataset
 hh <- hh %>%
+  left_join(fips_codes %>%
+    mutate(GEOID = paste0(state_code, county_code),
+          county_name = paste0(county, ", ", state)) %>%
+    select(GEOID, county_name),
+            by = c("COUNTY_ID" = "GEOID")) %>%
   group_by(FAMILYID) %>%
-  complete(YEAR = 2010:2019) %>%
-  fill(everything(), .direction = "down") %>%
-  ungroup()
+  # Arrange by YEAR within each FAMILYID group
+  arrange(FAMILYID, YEAR) %>%
+  # Identify the first row where COUNTY_FIPS changes within each FAMILYID group
+  mutate(AFTER_COUNTY_ID = lag(COUNTY_ID, default = first(COUNTY_ID))) %>%
+  ungroup() %>%
+left_join(fips_codes %>%
+    mutate(GEOID = paste0(state_code, county_code),
+          after_county_name = paste0(county, ", ", state)) %>%
+    select(GEOID, after_county_name, after_state_name = state_name),
+            by = c("AFTER_COUNTY_ID" = "GEOID"))
 
-fwrite(hh, "output/hh_cleaned.csv.gz")
+hh <- hh %>%
+   mutate(across(where(is.character), ~ na_if(., "")))
+
+nrow(hh)
+data.frame(head(hh))
+
+fwrite(hh, "output/hh_monroe_cleaned.csv.gz")

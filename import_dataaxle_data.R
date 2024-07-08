@@ -6,12 +6,10 @@ p_load(dplyr, nnet, ggplot2, effects, broom, stringr, purrr, tidyr, fst,
 # Set working directory
 setwd("~/data/projects/climate_displacement/")
 
-florida_counties <- counties(year = 2013, state = "FL", cb = TRUE)
+# florida_counties <- counties(year = 2013, state = "FL", cb = TRUE)
 
-florida_counties <- florida_counties %>%
-  st_drop_geometry() %>%
-  select(GEOID) %>%
-  pull()
+severely_affected_counties <- c("12087", "12086", "12021")
+monroe <- c("12087")
 
 # Counties affected by the hurriacne
 read_hh_func <- function(counties, start_year, end_year, region) {
@@ -77,4 +75,4 @@ print("exported!")
 
 # Define counties
 # read_hh_func(florida_affected_counties, "florida")
-read_hh_func(florida_counties, 2010, 2019, "florida_all")
+read_hh_func(monroe, 2012, 2019, "monroe")
