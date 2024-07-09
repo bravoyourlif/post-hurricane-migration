@@ -1,12 +1,68 @@
 # Load Libraries
 library(pacman)
 p_load(dplyr, nnet, ggplot2, effects, broom, stringr, purrr, tidyr, fst,
+      rethnicity, dtplyr,
        car, fastDummies, data.table, tidycensus, ggplot2, scales, tigris, sf, reshape2)
 
+# Set working directory
+if(dir.exists("/accounts/projects/timthomas/udp")) {
+  setwd("~/data/projects/climate_displacement")
+} else if(dir.exists("/Users/taesoo/Documents")) {
+  setwd("/Users/taesoo/Documents/Projects/post-hurricane-migration")
+} # Add Chaeyeon's directory here
+
 # load migration data
-florida <- read.csv("hh_raw_florida.csv")
-temp <- florida
-florida <- temp
+florida <- fread("hh_raw_florida.csv.gz") # Changed from `.csv` file for faster access
+# temp <- florida
+# florida <- temp # Unnecessary steps?
+
+################################
+# Add predicted race variables
+################################
+
+# Load Data Axle's ethnicity-race code combinations
+ethnicity <- read.csv("~/data/projects/climate_displacement/raw/ig_ethnicity.csv") %>%
+    left_join(read.csv("~/data/projects/climate_displacement/raw/ig_race.csv"))
+
+florida <- florida %>%
+  left_join(ethnicity %>% select(Ethnicity_Code_1 = Ethnicity, raw_race = Race))
+
+unique_names <- florida %>%
+  distinct(first_name_1, last_name_1)
+
+nrow(unique_names)/nrow(florida) # Obsservations reduced to 20%
+
+# Extract unique name combinations
+unique_names <- unique_names %>%
+  # Create new variables
+  mutate(pred_race = predict_ethnicity(
+    firstnames = first_name_1,
+    lastnames = last_name_1,
+    method = "fullname",
+    threads = 0,
+    na.rm = FALSE)) %>%
+  unnest(cols = c(pred_race))
+
+# Calculate prob_race using apply to avoid `rowwise` operations for shorter processing
+prob_columns <- grep("^prob_", colnames(unique_names))
+
+unique_names <- unique_names %>%
+  mutate(pred_race_probability = apply(unique_names[, prob_columns], 1, max, na.rm = TRUE)) %>%
+  select(-starts_with("prob_")) %>%
+  rename(pred_race = race)
+
+florida <- florida %>%
+  left_join(unique_names %>%
+    select(first_name_1, last_name_1, pred_race, pred_race_probability),
+    by = c("first_name_1", "last_name_1"))
+
+nrow(florida) # 21,215,272
+
+# Check distribution of the race variables
+florida %>%
+  count(raw_race, pred_race) %>%
+  arrange(desc(n)) %>%
+  data.frame()
 
 ################################
 # Migration Patterns - Chaeyeon ver.
@@ -72,6 +128,7 @@ migration_1819 <- migration
 
 florida_move <- florida %>% #mutate(FAMILYID, YEAR) %>%
   dplyr::select(FAMILYID, YEAR, everything()) %>%
+  lazy_dt() %>%
   arrange(FAMILYID, YEAR) %>%
   group_by(FAMILYID) %>%
   mutate(MOVE_OUT = ifelse(lead(GE_LONGITUDE_2010) != GE_LONGITUDE_2010, 1, 0),
@@ -89,9 +146,19 @@ florida_move <- florida %>% #mutate(FAMILYID, YEAR) %>%
          ################################
   ) %>% ungroup() %>%
   arrange(FAMILYID) %>% 
-  mutate(FIPS = sprintf("%02d%03d", GE_CENSUS_STATE_2010, GE_CENSUS_COUNTY))
+  mutate(FIPS = sprintf("%02d%03d", GE_CENSUS_STATE_2010, GE_CENSUS_COUNTY)) %>%
+  as_tibble()
 
 # temp <- florida_move[0:20, ]
+
+# Save the data for faster access
+# fwrite(florida_move, "hh_florida_move.csv.gz")
+
+########################
+# Start from here for faster access
+########################
+
+florida_move <- fread("hh_florida_move.csv.gz")
 
 # load FEMA affected counties data
 ia <- read.csv("fema-ia.csv")
