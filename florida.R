@@ -9,7 +9,8 @@ if(dir.exists("/accounts/projects/timthomas/udp")) {
   setwd("~/data/projects/climate_displacement")
 } else if(dir.exists("/Users/taesoo/Documents")) {
   setwd("/Users/taesoo/Documents/Projects/post-hurricane-migration")
-} # Add Chaeyeon's directory here
+} else {# Add Chaeyeon's directory here
+}
 
 # load migration data
 florida <- fread("hh_raw_florida.csv.gz") # Changed from `.csv` file for faster access
@@ -175,12 +176,18 @@ affected <- monroe
 
 # how many of them lived in the highly affected counties in MOVEYEAR and moved out?
 get_migration <- function(MOVEYEAR, FIPS_IN, FIPS_OUT) {
+
+  # Subset the data to:
+    # (1) Affected counties
+    # (2) A certain year
+    # (3) Households that have been coded to moved out
   mg <- florida_move[florida_move$FIPS %in% affected & florida_move$YEAR == MOVEYEAR & florida_move$MOVE_OUT == 1, ]
+  # Get the FAMILYID of those households
   mg_familyID <- unique(mg$FAMILYID) # 180687 families
   
   # temp <- mg[1:20, ]
-  # make one row for each family, generate 'moved_to' 
-  moved2_FIPS <- florida[florida$FAMILYID %in% mg_familyID, ] %>%
+  # make one row for each family, generate 'moved_to'
+  moved2_FIPS <- florida_move[florida_move$FAMILYID %in% mg_familyID, ] %>%
     mutate(
       FIPS = sprintf("%02d%03d", GE_CENSUS_STATE_2010, GE_CENSUS_COUNTY)
     ) %>% dplyr::select(FAMILYID, FIPS, YEAR) 
@@ -215,8 +222,16 @@ migration_1819 <- get_migration(2018, "FIPS_2018", "FIPS_2019")
 # Family Ties
 ################################
 
+# Set working directory
+if(dir.exists("/accounts/projects/timthomas/udp")) {
+  ties <- read.csv("raw/2019_total.csv")
+} else if(dir.exists("/Users/taesoo/Documents")) {
+  ties <- read.csv("raw/2019_total.csv")
+} else {# Add Chaeyeon's directory here
+ties <- read.csv("raw/2019_total.csv")
+}
+
 # load social ties data
-ties <- read.csv("../csv/2019_total.csv")
 ties <- ties %>% mutate(poi_bg = sprintf("%05d", poi_cbg))
 
 # select only related areas
@@ -315,19 +330,28 @@ clean_df <- final_df[-outlier_indices, ]
 mod <- lm(log(Migrants) ~ log(ratio), clean_df)
 summary(mod)
 
-library(hrbrthemes)
+p_load(hrbrthemes)
 # linear trend + confidence interval
 ggplot(clean_df, aes(x=Migrants, y=ratio)) +
   geom_point() +
   geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
   theme_ipsum()
 
-migration_1718 <- result_df
+migration_1718 <- result_df # result_df does not exist
 
 ##############################
 # Generate CSV for mapping
 ##############################
+
+# Set working directory
+if(dir.exists("/accounts/projects/timthomas/udp")) {
+  county.sf <- read.csv('raw/county_latlon.csv')
+} else if(dir.exists("/Users/taesoo/Documents")) {
+  county.sf <- read.csv('raw/county_latlon.csv')
+} else {# Add Chaeyeon's directory here
 county.sf <- read.csv('../geojson/county_latlon.csv')
+}
+
 county.sf <- county.sf %>% 
   mutate(geoid =  sprintf("%05d", poi_cbg)) %>% dplyr::select(geoid, poi.lon, poi.lat)
 
@@ -337,13 +361,28 @@ mapcsv <- left_join(mapcsv, county.sf, by = join_by("Destination" == "geoid") )
 cols <- c("Origin", "Destination", "Migrants", "Ratio", "O_lon", "O_lat", "D_lon", "D_lat")
 names(mapcsv) <- cols
 
-write.csv(mapcsv, file = './florida2019.csv', row.names = F)
+# Set working directory
+if(dir.exists("/accounts/projects/timthomas/udp")) {
+  write.csv(mapcsv, file = 'florida2019.csv', row.names = F)
+} else if(dir.exists("/Users/taesoo/Documents")) {
+  write.csv(mapcsv, file = 'florida2019.csv', row.names = F)
+} else {
+  write.csv(mapcsv, file = './florida2019.csv', row.names = F)
+}
 
 ##############################
 # Data Comparison with ACS 2015-2019
 ##############################
 
-acs <- read.csv('acs2015-2019.csv')
+# Set working directory
+if(dir.exists("/accounts/projects/timthomas/udp")) {
+  acs <- read.csv('raw/acs2015-2019.csv')
+} else if(dir.exists("/Users/taesoo/Documents")) {
+  acs <- read.csv('acs2015-2019.csv')
+} else {
+  acs <- read.csv('acs2015-2019.csv')
+}
+
 # drop NA values 
 acs <- acs[complete.cases(acs[,c("current.state", "current.county", "origin.state", "origin.county")]),]
 
