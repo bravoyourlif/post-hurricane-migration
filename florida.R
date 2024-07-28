@@ -296,7 +296,7 @@ final_df <- final_df %>%
   filter(ratio >= lower_bound & ratio <= upper_bound) %>%
   dplyr::select(-Q1, -Q3, -IQR, -lower_bound, -upper_bound) # Remove additional columns
 
-dim(final_df) 
+dim(final_df) # 146, 4
 
 # Linear regression
 mod <- lm(log(Migrants) ~ log(ratio), final_df)
@@ -315,6 +315,9 @@ ggplot(residuals_df, aes(x = Fitted, y = Residuals)) +
 # Delete Residual Outliers 
 opar <- par(mfrow = c(2,2), oma = c(0, 0, 1.1, 0))
 plot(mod, las = 1) 
+
+# save plot
+ggsave("plot/mod.png")
 
 par(opar)
 #final_df[c(172, 187, 91), ]
@@ -336,6 +339,7 @@ ggplot(clean_df, aes(x=Migrants, y=ratio)) +
   geom_point() +
   geom_smooth(method=lm , color="red", fill="#69b3a2", se=TRUE) +
   theme_ipsum()
+ggsave("plot/linear_trend_confidence_interval.png")
 
 migration_1718 <- result_df # result_df does not exist
 
@@ -388,13 +392,22 @@ acs <- acs[complete.cases(acs[,c("current.state", "current.county", "origin.stat
 
 acs$current.state <- as.numeric(acs$current.state)
 
-acs <- acs %>% mutate(
-  Destination = sprintf("%02d%03d", current.state, current.county),
-  Origin = sprintf("%02d%03d", origin.state, origin.county)
+# acs <- acs %>% mutate(
+#   Destination = sprintf("%02d%03d", current.state, current.county),
+#   Origin = sprintf("%02d%03d", origin.state, origin.county)
+# ) %>% dplyr::select(-current.state, -current.county, -origin.state, -origin.county)
+
+acs <- acs %>%
+mutate(
+  Destination = paste0(
+    str_pad(current.state, 2, "left", "0"),
+    str_pad(current.county, 3, "left", "0")),
+  Origin = paste0(
+    str_pad(origin.state, 2, "left", "0"),
+    str_pad(origin.county, 3, "left", "0"))
 ) %>% dplyr::select(-current.state, -current.county, -origin.state, -origin.county)
 
-affected <- c(12015, 12021, 12057, 12071, 12081, 12086, 12087, 12103, 12115)
-affected <- as.numeric(affected6)
+affected <- c("12015", "12021", "12057", "12071", "12081", "12086", "12087", "12103", "12115")
 acs <- acs[acs$Origin %in% affected, ]
 
 # Adding a Year column to each dataframe before combining
@@ -411,8 +424,12 @@ average_migrants <- combined_df %>%
   group_by(Origin, Destination) %>%
   summarise(Average_Migrants = mean(Migrants, na.rm = TRUE))  # na.rm = TRUE to handle any NA values safely
 
+# Monroe county is not present in the acs dataset
+acs %>%
+  filter(Origin=="12087")
+
 # Merging ACS and Axle
-comparison_df <- merge(average_migrants, acs, by = c("Origin", "Destination"))
+comparison_df <- merge(average_migrants, acs, by = c("Origin", "Destination")) # Why not joined?
 comparison_df$Average_Migrants <- as.numeric(comparison_df$Average_Migrants)
 comparison_df$Estimate <- as.numeric(comparison_df$Estimate)
 
@@ -451,6 +468,7 @@ ggplot(residuals_df, aes(x = Fitted, y = Residuals)) +
   labs(x = "Fitted Values", y = "Residuals", title = "Residuals vs Fitted Plot") +
   theme_minimal() # A cleaner theme for the plot
 
+ggsave("plot/residuals.png")
 
 library(hrbrthemes)
 
@@ -470,6 +488,8 @@ ggplot(comparison_df_clean, aes(x=Average_Migrants, y=Estimate)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
+  ggsave("plot/linear_trend_confidence_interval2.png")
+
 # Add predicted values to the dataframe
 comparison_df_clean$Predicted_Estimate <- predict(mod, newdata = comparison_df_clean)
 
@@ -487,6 +507,9 @@ ggplot(comparison_df_clean, aes(x = Predicted_Estimate, y = Estimate)) +
   stat_poly_eq(use_label(c("eq", "R2"))) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
+
+ggsave("plot/scatter_predicted_values_actual_estimates.png")
+
 ##############################
 # Descriptive Stats for Migration 
 ##############################
@@ -546,6 +569,9 @@ ggplot(combined_df, aes(x = Year, y = Proportion, fill = Migration_Type)) +
                                "Out-State" = "#89b6b5",
                                "within-affected" = "#7eb7e8",
                                "In-State" = "#0072ce"))  # You can customize the colors as needed
+
+ggsave("plot/stacked_bar_chart.png")
+
 # Chaeyeon ver.
 # 1516 87.88 12.12
 # 1617 92.87 7.13
@@ -564,7 +590,7 @@ combined_plot <- combined_plot %>% group_by(Year) %>%
   ungroup()
   
 # Creating the plot
-ggplot(combined_plot, aes(x = Year, y = out_affected)) +
+ggplot(combined_plot, aes(x = Year, y = out_affected, group = 1)) +
   geom_line(color = "hotpink", size = 1, linetype = "dashed") +  # Draw a blue line
   geom_point(color = "hotpink", size = 2) +  # Add blue points at each data point
   geom_text(aes(label = sprintf("%.2f", out_affected)), vjust =-0.4, color = "hotpink") +  # Add labels above each point
@@ -578,8 +604,9 @@ ggplot(combined_plot, aes(x = Year, y = out_affected)) +
     panel.grid.minor = element_blank(),
     text = element_text(size = 12)  # Setting text size for better readability
   )
-####################
+ggsave("plot/proportion_linegraph.png")
 
+####################
 # 2) Table of # of Migrants from each county. in-state and out-state
 ####################
 
@@ -615,7 +642,6 @@ combined_df$County[combined_df$Origin == '12051'] <- "Hendry"
 combined_df$County[combined_df$Origin == '12043'] <- "Glades"
 combined_df$County[combined_df$Origin == '12097'] <- "Osceola"
 
-
 county_stat <- combined_df %>%
   group_by(County, Migration_Type, Year) %>%
   summarise(Total_Migrants = sum(Migrants))
@@ -640,6 +666,8 @@ ggplot(total_migrations, aes(x = Year, y = Total, group = County, color = County
   theme_minimal() +
   scale_y_continuous()  # Format y-axis as percentage
 
+  ggsave("plot/total_migration1.png")
+
 # Plotting the data
 ggplot(total_migrations2, aes(x = Year, y = Total)) +
   geom_line() +  # Line for each origin
@@ -651,7 +679,7 @@ ggplot(total_migrations2, aes(x = Year, y = Total)) +
   theme_minimal() +
   scale_y_continuous() 
 
-
+  ggsave("plot/total_migration2.png")
 
 # Calculate in-state migrations
 out_affected <- county_stat %>%
