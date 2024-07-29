@@ -161,18 +161,146 @@ florida_move <- florida %>% #mutate(FAMILYID, YEAR) %>%
 
 florida_move <- fread("hh_florida_move.csv.gz")
 
+########################
+# Data Validation
+########################
+
+share_da <- florida_move %>%
+  lazy_dt() %>%
+  mutate(FIPS = str_pad(FIPS, 5, "left", "0")) %>%
+  filter(substr(FIPS, 1, 2)=="12") %>%
+  group_by(YEAR, FIPS) %>%
+  summarise(total_hh = n(),
+            renter_occupied = sum(OWNER_RENTER_STATUS < 7, na.rm=TRUE),
+            hh_white = sum(pred_race == "white", na.rm=TRUE),
+            hh_black = sum(pred_race == "black", na.rm=TRUE),
+            hh_asian = sum(pred_race == "asian", na.rm=TRUE),
+            hh_hispanic = sum(pred_race == "latinx", na.rm=TRUE),
+            hh_other = sum(pred_race == "other", na.rm=TRUE)) %>%
+  ungroup() %>%
+  as_tibble()
+
+share_da %>%
+  filter(FIPS == "12087")
+
+acs_vars <- get_acs(geography = "county",
+  variables = c("total_hh" = "B25003_001E", # Excluding group quarters
+                # "total_hh" = "B09019_001E", # Including group quarters
+                "renter_hh" = "B25003_003E",
+                "hh_total" = "B25006_001E",
+                "hh_black" = "B25006_003E",
+                "hh_asian" = "B25006_005E"
+                ),
+                             state = "FL",
+                             county = c("Charlotte", "Collier", "Hillsborough", "Lee",
+                                      "Manatee", "Miami-Dade", "Monroe", "Pinellas", "Sarasota"),
+                             year = 2019,
+                             survey = "acs5",
+                             output = "wide",
+                             geometry = FALSE) %>%
+  mutate(share_renter = renter_hh /total_hh,
+         share_black = hh_black/hh_total,
+         share_asian = hh_asian/hh_total
+    ) %>%
+  select(-matches("M$", ignore.case = FALSE))
+
+share_comb <- share_da %>%
+  filter(YEAR >= 2015 & YEAR <= 2019) %>%
+  group_by(FIPS) %>%
+  summarise(renter_occupied = mean(renter_occupied, na.rm=TRUE),
+            mean_hh = mean(total_hh, na.rm=TRUE),
+            total_hh = mean(total_hh, na.rm=TRUE),
+            hh_black = mean(hh_black, na.rm=TRUE),
+            hh_asian = mean(hh_asian, na.rm=TRUE)) %>%
+  ungroup() %>%
+  mutate(share_renter = renter_occupied/total_hh,
+         share_black = hh_black/total_hh,
+         share_asian = hh_asian/total_hh
+    ) %>%
+  right_join(acs_vars,
+    by = c("FIPS" = "GEOID"),
+    suffix = c("_da", "_acs"))
+
+# Total number of households
+plot <- share_comb %>%
+  ggplot(aes(x = total_hh_acs, y = mean_hh)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "blue") + # Identity line
+  geom_smooth(method = "lm", se = FALSE, color = "red") + # Regression line
+  labs(title = "Total number of households by census tract (2006-2010)",
+       x = "Total Households ACS",
+       y = "Total Households DA")
+
+# Calculate R-squared value
+model <- lm(mean_hh ~ total_hh_acs, data = share_comb)
+r_squared <- summary(model)$r.squared
+
+# Add R-squared value to the plot
+plot <- plot +
+  annotate("text", x = Inf, y = -Inf, label = paste("R² =", round(r_squared, 2)),
+           hjust = 1.1, vjust = -0.5, size = 5, color = "black")
+
+ggsave("plot/validation_total_hh_2006_2010.png", plot)
+
+# Renter householder (%)
+plot <- share_comb %>%
+  ggplot(aes(x = share_renter_acs, y = share_renter_da)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "blue") + # Identity line
+  geom_smooth(method = "lm", se = FALSE, color = "red") + # Regression line
+  labs(title = "Share of renter households (2006-2010)",
+       x = "Share Renter ACS",
+       y = "Share Renter DA")
+
+# Calculate R-squared value
+model <- lm(share_renter_da ~ share_renter_acs, data = share_comb)
+r_squared <- summary(model)$r.squared
+
+# Add R-squared value to the plot
+plot <- plot +
+  annotate("text", x = Inf, y = -Inf, label = paste("R² =", round(r_squared, 2)),
+           hjust = 1.1, vjust = -0.5, size = 5, color = "black")
+
+ggsave("plot/validation_pct_renter_2006_2010.png", plot)
+
+# Black householder (%)
+plot <- share_comb %>%
+  ggplot(aes(x = share_black_acs, y = share_black_da)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "blue") + # Identity line
+  geom_smooth(method = "lm", se = FALSE, color = "red") + # Regression line
+  labs(title = "Share of Black households (2006-2010)",
+       x = "Share Black ACS",
+       y = "Share Black DA")
+
+# Calculate R-squared value
+model <- lm(share_black_da ~ share_black_acs, data = share_comb)
+r_squared <- summary(model)$r.squared
+
+# Add R-squared value to the plot
+plot <- plot +
+  annotate("text", x = Inf, y = -Inf, label = paste("R² =", round(r_squared, 2)),
+           hjust = 1.1, vjust = -0.5, size = 5, color = "black")
+
+ggsave("plot/validation_pct_black_2006_2010.png", plot)
+
+
+############
+# Calculate migration
+############
+
 # load FEMA affected counties data
 ia <- read.csv("fema-ia.csv")
 ia <- ia %>% mutate(FIPS2 = sprintf("12%03d", FIPS))
 
 # Choice of Highly Affected Counties
 affected9 <- c("12015", "12021", "12057", "12071", "12081", "12086", "12087", "12103", "12115")
-affected6 <- c("12021", "12086", "12009", "12051", "12043", "12097")
+affected6 <- c("12021", "12086", "12009", "12051", "12043", "12087", "12097")
 affected48 <- ia$FIPS2
 affected2 <- c("12021", "12086")
 monroe <- c("12087")
 
-affected <- monroe
+affected <- affected6
 
 # how many of them lived in the highly affected counties in MOVEYEAR and moved out?
 get_migration <- function(MOVEYEAR, FIPS_IN, FIPS_OUT) {
@@ -296,7 +424,7 @@ final_df <- final_df %>%
   filter(ratio >= lower_bound & ratio <= upper_bound) %>%
   dplyr::select(-Q1, -Q3, -IQR, -lower_bound, -upper_bound) # Remove additional columns
 
-dim(final_df) # 146, 4
+dim(final_df)
 
 # Linear regression
 mod <- lm(log(Migrants) ~ log(ratio), final_df)
@@ -426,7 +554,7 @@ average_migrants <- combined_df %>%
 
 # Monroe county is not present in the acs dataset
 acs %>%
-  filter(Origin=="12087")
+  count(Origin)
 
 # Merging ACS and Axle
 comparison_df <- merge(average_migrants, acs, by = c("Origin", "Destination")) # Why not joined?
@@ -516,27 +644,38 @@ ggsave("plot/scatter_predicted_values_actual_estimates.png")
 
 get_mgtype <- function(data, year) {
   # Determine if migration is in-state or out-state
-  # data$Migration_Type <- ifelse(substr(as.character(data$Origin), 1, 2) == substr(as.character(data$Destination), 1, 2), "In-State", "Out-State")
   data <- data %>%
     mutate(Migration_Type = case_when(
       Destination == Origin ~ 'within-county',
-      substr(Destination, 1, 2) == '12' & Destination %in% affected ~ 'within-affected',
+      # substr(Destination, 1, 2) == '12' & Destination %in% affected ~ 'within-affected', # Seems unnecessary
       substr(Destination, 1, 2) == '12' & !(Destination %in% affected) ~ 'In-State',
       substr(Destination, 1, 2) != '12' ~ 'Out-State'
     ))
-  
-  # Summary of migrants by type
-  migration_summary <- data %>%
-    group_by(Migration_Type) %>%
-    summarise(Total_Migrants = sum(Migrants))
-  
-  # Calculate proportions
-  total_migrants <- sum(migration_summary$Total_Migrants)
-  migration_summary$Proportion <- migration_summary$Total_Migrants / total_migrants * 100
+
+  library(dplyr)
+
+# Summary of migrants by type
+migration_summary <- data %>%
+  group_by(Origin, Migration_Type) %>%
+  summarise(Total_Migrants = sum(Migrants), .groups = 'drop')
+
+# Calculate total migrants for each Origin
+total_migrants_by_origin <- migration_summary %>%
+  group_by(Origin) %>%
+  summarise(Total_Migrants_Origin = sum(Total_Migrants), .groups = 'drop')
+
+# Join the total migrants by origin back to the migration summary
+migration_summary <- migration_summary %>%
+  left_join(total_migrants_by_origin, by = "Origin")
+
+# Calculate proportions within each Origin
+migration_summary <- migration_summary %>%
+  mutate(Proportion = Total_Migrants / Total_Migrants_Origin * 100)
 
   # Bar plot for in-state vs out-state migration with proportions
   ggplot(migration_summary, aes(x = Migration_Type, y = Total_Migrants, fill = Migration_Type)) +
     geom_bar(stat = "identity") +
+    facet_wrap(~Origin, scales = "free") +
     geom_text(aes(label = paste(Total_Migrants, " (", sprintf("%.2f%%", Proportion), ")", sep = "")), vjust = -0.1) +
     labs(title = "In-State vs. Out-State Migration", x = "Type of Migration", y = "Number of Migrants") +
     theme_minimal()
@@ -556,15 +695,28 @@ combined_df <- rbind(mgtype_1516, mgtype_1617, mgtype_1718, mgtype_1819)
 # Convert Migration_Type to a factor with desired order
 combined_df$Migration_Type <- factor(combined_df$Migration_Type, levels = c("Out-State", "In-State", "within-affected", "within-county"))
 
+combined_df <- combined_df %>%
+  left_join(tigris::fips_codes %>%
+    mutate(county_fips = paste0(state_code, county_code),
+          origin_county = paste0(county, ", ", state)) %>%
+    select(county_fips, origin_county),
+    by = c("Origin" = "county_fips"))
+
 # Create the stacked bar chart
 ggplot(combined_df, aes(x = Year, y = Proportion, fill = Migration_Type)) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = sprintf("%.2f", Proportion)), position = position_stack(vjust = 0.5), size = 3, color = "black") +
-  labs(title = "Proportions by Migration Type (Monroe)",
+  labs(title = "Proportions by Migration Type",
        x = "Year",
        y = "Proportion") +
   theme_minimal() +
-  theme(axis.text.x = element_text(hjust = 1)) +
+  facet_wrap(~origin_county, scales = "free") +
+   theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    text = element_text(size = 12),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
+  ) +
   scale_fill_manual(values = c("within-county" = "#addc91", 
                                "Out-State" = "#89b6b5",
                                "within-affected" = "#7eb7e8",
@@ -585,19 +737,25 @@ ggsave("plot/stacked_bar_chart.png")
 # )
 
 combined_plot <- combined_df[combined_df$Migration_Type %in% c("In-State","Out-State"), ]
-combined_plot <- combined_plot %>% group_by(Year) %>% 
+combined_plot <- combined_plot %>% group_by(Origin, Year) %>%
   summarise(out_affected = sum(Proportion)) %>%
-  ungroup()
+  ungroup() %>%
+  left_join(tigris::fips_codes %>%
+    mutate(county_fips = paste0(state_code, county_code),
+          origin_county = paste0(county, ", ", state)) %>%
+    select(county_fips, origin_county),
+    by = c("Origin" = "county_fips"))
   
 # Creating the plot
-ggplot(combined_plot, aes(x = Year, y = out_affected, group = 1)) +
-  geom_line(color = "hotpink", size = 1, linetype = "dashed") +  # Draw a blue line
-  geom_point(color = "hotpink", size = 2) +  # Add blue points at each data point
-  geom_text(aes(label = sprintf("%.2f", out_affected)), vjust =-0.4, color = "hotpink") +  # Add labels above each point
+ggplot(combined_plot, aes(x = Year, y = out_affected, group = origin_county, color = origin_county)) +
+  geom_line(size = 1) +  # Draw a blue line
+  geom_point(size = 2) +  # Add blue points at each data point
+  geom_text(aes(label = sprintf("%.2f", out_affected)), vjust =-0.4) +  # Add labels above each point
   # scale_x_continuous(breaks = c("2015-2016", "2016-2017", "2017-2018", "2018-2019")) +  # Define x-axis breaks to show all years
   labs(title = "Yearly Proportion of Migration outside the affected counties",
        x = "Year",
        y = "Proportion (%)") +
+  # facet_wrap(~origin_county, scales = "free") +
   theme_minimal() +  # Use a minimal theme for a clean look
   theme(
     panel.grid.major = element_blank(),
@@ -622,41 +780,46 @@ combined_df <- rbind(migration_1516, migration_1617, migration_1718, migration_1
 combined_df <- combined_df %>%
   mutate(Migration_Type = case_when(
     Destination == Origin ~ 'within-county',
-    substr(Destination, 1, 2) == '12' & Destination %in% affected48 ~ 'within-affected',
-    substr(Destination, 1, 2) == '12' & !(Destination %in% affected48) ~ 'In-State',
+    substr(Destination, 1, 2) == '12' & Destination %in% affected ~ 'within-affected', # Originally affected48
+    substr(Destination, 1, 2) == '12' & !(Destination %in% affected) ~ 'In-State', # Originally affected48
     substr(Destination, 1, 2) != '12' ~ 'Out-State'
-  ))
+  )) %>%
+  left_join(tigris::fips_codes %>%
+    mutate(county_fips = paste0(state_code, county_code),
+          origin_county = paste0(county, ", ", state)) %>%
+    select(county_fips, origin_county),
+    by = c("Origin" = "county_fips"))
 
-combined_df$County[combined_df$Origin == '12015'] <- "Charlotte"
-combined_df$County[combined_df$Origin == '12021'] <- "Collier"
-combined_df$County[combined_df$Origin == '12057'] <- "Hillsborough"
-combined_df$County[combined_df$Origin == '12071'] <- "Lee"
-combined_df$County[combined_df$Origin == '12081'] <- "Manatee"
-combined_df$County[combined_df$Origin == '12086'] <- "Miami-Dade"
-combined_df$County[combined_df$Origin == '12087'] <- "Monroe"
-combined_df$County[combined_df$Origin == '12103'] <- "Pinellas"
-combined_df$County[combined_df$Origin == '12115'] <- "Sarasota"
+# combined_df$County[combined_df$Origin == '12015'] <- "Charlotte"
+# combined_df$County[combined_df$Origin == '12021'] <- "Collier"
+# combined_df$County[combined_df$Origin == '12057'] <- "Hillsborough"
+# combined_df$County[combined_df$Origin == '12071'] <- "Lee"
+# combined_df$County[combined_df$Origin == '12081'] <- "Manatee"
+# combined_df$County[combined_df$Origin == '12086'] <- "Miami-Dade"
+# combined_df$County[combined_df$Origin == '12087'] <- "Monroe"
+# combined_df$County[combined_df$Origin == '12103'] <- "Pinellas"
+# combined_df$County[combined_df$Origin == '12115'] <- "Sarasota"
 
-combined_df$County[combined_df$Origin == '12009'] <- "Brevard"
-combined_df$County[combined_df$Origin == '12051'] <- "Hendry"
-combined_df$County[combined_df$Origin == '12043'] <- "Glades"
-combined_df$County[combined_df$Origin == '12097'] <- "Osceola"
+# combined_df$County[combined_df$Origin == '12009'] <- "Brevard"
+# combined_df$County[combined_df$Origin == '12051'] <- "Hendry"
+# combined_df$County[combined_df$Origin == '12043'] <- "Glades"
+# combined_df$County[combined_df$Origin == '12097'] <- "Osceola"
 
 county_stat <- combined_df %>%
-  group_by(County, Migration_Type, Year) %>%
+  group_by(origin_county, Migration_Type, Year) %>%
   summarise(Total_Migrants = sum(Migrants))
 
 # Calculate total migrations per origin and year
 total_migrations <- county_stat %>%
-  group_by(County, Year) %>%
+  group_by(origin_county, Year) %>%
   summarise(Total = sum(Total_Migrants))
 
 total_migrations2 <- county_stat %>%
-  group_by(Year) %>%
+  group_by(origin_county, Year) %>%
   summarise(Total = sum(Total_Migrants))
 
 # Plotting the data
-ggplot(total_migrations, aes(x = Year, y = Total, group = County, color = County)) +
+ggplot(total_migrations, aes(x = Year, y = Total, group = origin_county, color = origin_county)) +
   geom_line() +  # Line for each origin
   geom_point() +  # Points on each data point
   labs(title = "Total Migration by Origin and Year",
@@ -669,7 +832,7 @@ ggplot(total_migrations, aes(x = Year, y = Total, group = County, color = County
   ggsave("plot/total_migration1.png")
 
 # Plotting the data
-ggplot(total_migrations2, aes(x = Year, y = Total)) +
+ggplot(total_migrations2, aes(x = Year, y = Total, group = origin_county, color = origin_county)) +
   geom_line() +  # Line for each origin
   geom_point() +  # Points on each data point
   geom_text(aes(label = Total),  vjust = -0.4, color = "black") +
@@ -684,17 +847,17 @@ ggplot(total_migrations2, aes(x = Year, y = Total)) +
 # Calculate in-state migrations
 out_affected <- county_stat %>%
   filter(Migration_Type %in% c("In-State","Out-State")) %>%
-  group_by(County, Year) %>%
+  group_by(origin_county, Year) %>%
   summarise(out_affected_total = sum(Total_Migrants))
 
 # Join to get full data with totals
-migration_data <- merge(out_affected, total_migrations, by = c("County", "Year"))
+migration_data <- merge(out_affected, total_migrations, by = c("origin_county", "Year"))
 
 # Calculate the proportion of in-state migrations
 migration_data$out_affected_prop <- 100 *(migration_data$out_affected_total / migration_data$Total)
 
 # Plotting the data
-ggplot(migration_data, aes(x = Year, y = out_affected_prop, group = County, color = County)) +
+ggplot(migration_data, aes(x = Year, y = out_affected_prop, group = origin_county, color = origin_county)) +
   geom_line() +  # Line for each origin
   geom_point() +  # Points on each data point
   geom_text(aes(label = sprintf("%.2f", out_affected_prop)), vjust =-0.4) +
@@ -706,3 +869,4 @@ ggplot(migration_data, aes(x = Year, y = out_affected_prop, group = County, colo
   scale_y_continuous(labels = scales::percent_format(scale = 1))  # Format y-axis as percentage
 
 
+ggsave("plot/in_state_migration.png")
